@@ -340,6 +340,7 @@ func (s *Stream) TransStart() {
 					continue
 				}
 				v.init = true
+				// log.Printf("[%s] send cache packet", v.w.Info())
 			} else {
 				new_packet := p
 				//writeType := reflect.TypeOf(v.w)

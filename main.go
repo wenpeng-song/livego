@@ -108,7 +108,32 @@ func startHTTPOpera(stream *rtmp.RtmpStream) {
 	}
 }
 
+// func noNameReturn(x, y int) (ret int) {
+// 	z := x*y
+// 	return z
+// }
+
 func main() {
+
+	/* golang try
+	var x int
+	x = 3
+	_ = x
+	s := []int{1, 2, 3}     // Result is a slice of length 3.
+	s2 := []int {4, 5, 6}
+	s2 = append(s, s2...)
+	s = append(s, []int{4, 5, 6}...)
+	s2 = append(s2, 4, 5, 6);
+	m := map[string]int{"a":1, "b":2, "c":3}
+	fmt.Println(m);
+	_ = make([]int, 20)
+	a := [4]int {}
+	_ = a
+	_ = s2
+	file, _ := os.Create("output.txt")
+	fmt.Fprint(file, "This is how you write to a file, by the way")
+	file.Close()
+*/
 	defer func() {
 		if r := recover(); r != nil {
 			log.Println("livego panic: ", r)
@@ -122,10 +147,10 @@ func main() {
 	}
 
 	stream := rtmp.NewRtmpStream()
-	hlsServer := startHls()
+	// hlsServer := startHls()
 	startHTTPFlv(stream)
 	startHTTPOpera(stream)
 
-	startRtmp(stream, hlsServer)
-	//startRtmp(stream, nil)
+	// startRtmp(stream, hlsServer)
+	startRtmp(stream, nil)
 }

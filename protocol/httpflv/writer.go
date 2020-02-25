@@ -27,6 +27,8 @@ type FLVWriter struct {
 	closedChan      chan struct{}
 	ctx             http.ResponseWriter
 	packetQueue     chan *av.Packet
+	first			bool
+	sFirst			bool
 }
 
 func NewFLVWriter(app, title, url string, ctx http.ResponseWriter) *FLVWriter {
@@ -40,6 +42,8 @@ func NewFLVWriter(app, title, url string, ctx http.ResponseWriter) *FLVWriter {
 		closedChan:  make(chan struct{}),
 		buf:         make([]byte, headerLen),
 		packetQueue: make(chan *av.Packet, maxQueueNum),
+		first: 		 false,
+		sFirst:		 false,
 	}
 
 	ret.ctx.Write([]byte{0x46, 0x4c, 0x56, 0x01, 0x05, 0x00, 0x00, 0x00, 0x09})
@@ -94,6 +98,22 @@ func (flvWriter *FLVWriter) Write(p *av.Packet) (err error) {
 			err = errors.New(errString)
 		}
 	}()
+	t := ""
+	if p.IsAudio {
+		t = "audio"
+	}
+	if p.IsVideo {
+		t = "video"
+	}
+	if p.IsMetadata {
+		t = "metadata"
+	}
+	if !flvWriter.first {
+		fmt.Println("first package: type: ", t, time.Now().UTC())
+		if p.IsVideo {
+			flvWriter.first = true
+		}
+	}
 	if len(flvWriter.packetQueue) >= maxQueueNum-24 {
 		flvWriter.DropPacket(flvWriter.packetQueue, flvWriter.Info())
 	} else {
@@ -120,6 +140,23 @@ func (flvWriter *FLVWriter) SendPacket() error {
 					}
 				} else {
 					typeID = av.TAG_AUDIO
+				}
+			}
+
+			t := ""
+			if p.IsAudio {
+				t = "audio"
+			}
+			if p.IsVideo {
+				t = "video"
+			}
+			if p.IsMetadata {
+				t = "metadata"
+			}
+			if !flvWriter.sFirst {
+				fmt.Println("first package send time: type: ", t, time.Now().UTC())
+				if p.IsVideo {
+					flvWriter.sFirst = true
 				}
 			}
 			dataLen := len(p.Data)

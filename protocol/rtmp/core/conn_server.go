@@ -112,9 +112,9 @@ func (connServer *ConnServer) connect(vs []interface{}) error {
 		case string:
 		case float64:
 			id := int(v.(float64))
-			if id != 1 {
-				return ErrReq
-			}
+			// if id != 1 {
+			// 	return ErrReq
+			// }
 			connServer.transactionID = id
 		case amf.Object:
 			obimap := v.(amf.Object)

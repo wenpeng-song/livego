@@ -91,7 +91,7 @@ func (server *Server) handleConn(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	url := r.URL.String()
+	// url := r.URL.String()
 	u := r.URL.Path
 	if pos := strings.LastIndex(u, "."); pos < 0 || u[pos:] != ".flv" {
 		http.Error(w, "invalid path", http.StatusBadRequest)
@@ -126,8 +126,8 @@ func (server *Server) handleConn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	writer := NewFLVWriter(paths[0], paths[1], url, w)
+	// writer := NewFLVWriter(paths[0], paths[1], url, w)
 
-	server.handler.HandleWriter(writer)
-	writer.Wait()
+	// server.handler.HandleWriter(writer)
+	// writer.Wait()
 }
