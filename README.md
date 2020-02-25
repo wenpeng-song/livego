@@ -1,3 +1,12 @@
+# fork change
+pure rtmp proxy server.
+disable http-hls
+disable http-opera
+disable flv dvr, file recording
+remove a not neccesary error, "req error" for support more rtmp push.
+
+# Original:
+------
 # livego
 简单高效的直播服务器：
 - 安装和使用非常简单；
