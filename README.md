@@ -1,9 +1,9 @@
-# fork change
-pure rtmp proxy server.
-disable http-hls
-disable http-opera
-disable flv dvr, file recording
-remove a not neccesary error, "req error" for support more rtmp push.
+# Fork change
+a pure rtmp proxy server.
+- disable http-hls
+- disable http-opera
+- disable flv dvr, file recording
+- remove a not neccesary error, "req error" for support more rtmp push.
 
 # Original:
 ------
