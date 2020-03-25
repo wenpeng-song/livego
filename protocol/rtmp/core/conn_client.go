@@ -224,7 +224,7 @@ func (connClient *ConnClient) Start(url string, method string) error {
 	connClient.title = ps[1]
 	connClient.query = u.RawQuery
 	connClient.tcurl = "rtmp://" + u.Host + "/" + connClient.app
-	port := ":1935"
+	port := ":19035"
 	host := u.Host
 	localIP := ":0"
 	var remoteIP string

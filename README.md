@@ -32,7 +32,7 @@ a pure rtmp proxy server.
 直接下载编译好的[二进制文件](https://github.com/gwuhaolin/livego/releases)后，在命令行中执行。
 
 #### 从 Docker 启动
-执行`docker run -p 1935:1935 -p 19080:19080 -p 7002:7002 -d --name livego gwuhaolin/livego`启动
+执行`docker run -p 19035:19035 -p 19080:19080 -p 7002:7002 -d --name livego gwuhaolin/livego`启动
 
 #### 从源码编译
 1. 下载源码 `git clone https://github.com/gwuhaolin/livego.git`
@@ -40,9 +40,9 @@ a pure rtmp proxy server.
 
 ## 使用
 2. 启动服务：执行 `livego` 二进制文件启动 livego 服务；
-3. 上行推流：通过 `RTMP` 协议把视频流推送到 `rtmp://localhost:1935/live/movie`，例如使用 `ffmpeg -re -i demo.flv -c copy -f flv rtmp://localhost:1935/live/movie` 推送；
+3. 上行推流：通过 `RTMP` 协议把视频流推送到 `rtmp://localhost:19035/live/movie`，例如使用 `ffmpeg -re -i demo.flv -c copy -f flv rtmp://localhost:19035/live/movie` 推送；
 4. 下行播放：支持以下三种播放协议，播放地址如下：
-    - `RTMP`:`rtmp://localhost:1935/live/movie`
+    - `RTMP`:`rtmp://localhost:19035/live/movie`
     - `FLV`:`http://127.0.0.1:19080/live/movie.flv`
     - `HLS`:`http://127.0.0.1:7002/live/movie.m3u8`
 
