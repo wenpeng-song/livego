@@ -51,12 +51,13 @@ func LoadConfig(configfilename string) error {
 }
 
 func CheckAppName(appname string) bool {
-	for _, app := range RtmpServercfg.Server {
-		if (app.Appname == appname) && (app.Liveon == "on") {
-			return true
-		}
-	}
-	return false
+    return true
+// 	for _, app := range RtmpServercfg.Server {
+// 		if (app.Appname == appname) && (app.Liveon == "on") {
+// 			return true
+// 		}
+// 	}
+// 	return false
 }
 
 func GetStaticPushUrlList(appname string) ([]string, bool) {
