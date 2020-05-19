@@ -3,6 +3,7 @@ a pure rtmp proxy server.
 - disable http-hls
 - disable http-opera
 - disable flv dvr, file recording
+- ignore app name check
 - remove a not neccesary error, "req error" for support more rtmp push.
 
 # Original:
