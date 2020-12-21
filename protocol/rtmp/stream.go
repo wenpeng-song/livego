@@ -31,7 +31,7 @@ func NewRtmpStream() *RtmpStream {
 
 func (rs *RtmpStream) HandleReader(r av.ReadCloser) {
 	info := r.Info()
-	log.Debugf("HandleReader: info[%v]", info)
+	log.Info("HandleReader: info[%v]", info)
 
 	var stream *Stream
 	i, ok := rs.streams.Load(info.Key)
@@ -56,7 +56,7 @@ func (rs *RtmpStream) HandleReader(r av.ReadCloser) {
 
 func (rs *RtmpStream) HandleWriter(w av.WriteCloser) {
 	info := w.Info()
-	log.Debugf("HandleWriter: info[%v]", info)
+	log.Info("HandleWriter: info[%v]", info)
 
 	var s *Stream
 	item, ok := rs.streams.Load(info.Key)
@@ -397,7 +397,7 @@ func (s *Stream) CheckAlive() (n int) {
 func (s *Stream) closeInter() {
 	if s.r != nil {
 		s.StopStaticPush()
-		log.Debugf("[%v] publisher closed", s.r.Info())
+		log.Info("[%v] publisher closed", s.r.Info())
 	}
 
 	s.ws.Range(func(key, val interface{}) bool {

@@ -91,7 +91,7 @@ func (s *Server) Serve(listener net.Listener) (err error) {
 			return
 		}
 		conn := core.NewConn(netconn, 4*1024)
-		log.Debug("new client, connect remote: ", conn.RemoteAddr().String(),
+		log.Info("new client, connect remote: ", conn.RemoteAddr().String(),
 			"local:", conn.LocalAddr().String())
 		go s.handleConn(conn)
 	}
@@ -127,7 +127,7 @@ func (s *Server) handleConn(conn *core.Conn) error {
 		}
 		reader := NewVirReader(connServer)
 		s.handler.HandleReader(reader)
-		log.Debugf("new publisher: %+v", reader.Info())
+		log.Info("new publisher: %+v", reader.Info())
 
 		if s.getter != nil {
 			writeType := reflect.TypeOf(s.getter)
@@ -140,7 +140,7 @@ func (s *Server) handleConn(conn *core.Conn) error {
 		// s.handler.HandleWriter(flvWriter.GetWriter(reader.Info()))
 	} else {
 		writer := NewVirWriter(connServer)
-		log.Debugf("new player: %+v", writer.Info())
+		log.Info("new player: %+v", writer.Info())
 		s.handler.HandleWriter(writer)
 	}
 
@@ -436,6 +436,6 @@ func (v *VirReader) Info() (ret av.Info) {
 }
 
 func (v *VirReader) Close(err error) {
-	log.Debug("publisher ", v.Info(), "closed: "+err.Error())
+	log.Info("publisher ", v.Info(), "closed: "+err.Error())
 	v.conn.Close(err)
 }

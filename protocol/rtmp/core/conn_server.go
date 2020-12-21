@@ -279,7 +279,7 @@ func (connServer *ConnServer) handleCmdMsg(c *ChunkStream) error {
 			}
 			connServer.done = true
 			connServer.isPublisher = true
-			log.Debug("handle publish req done")
+			log.Info("handle publish req done")
 		case cmdPlay:
 			if err = connServer.publishOrPlay(vs[1:]); err != nil {
 				return err
@@ -289,7 +289,7 @@ func (connServer *ConnServer) handleCmdMsg(c *ChunkStream) error {
 			}
 			connServer.done = true
 			connServer.isPublisher = false
-			log.Debug("handle play req done")
+			log.Info("handle play req done")
 		case cmdFcpublish:
 			connServer.fcPublish(vs)
 		case cmdReleaseStream:
