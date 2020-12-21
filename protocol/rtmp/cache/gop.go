@@ -1,13 +1,14 @@
 package cache
 
 import (
-	"errors"
+	"fmt"
+
 	"github.com/gwuhaolin/livego/av"
 )
 
 var (
 	maxGOPCap    int = 1024
-	ErrGopTooBig     = errors.New("gop to big")
+	ErrGopTooBig     = fmt.Errorf("gop to big")
 )
 
 type array struct {
@@ -79,7 +80,7 @@ func (gopCache *GopCache) writeToArray(chunk *av.Packet, startNew bool) error {
 		ginc = gopCache.gops[(gopCache.nextindex+1)%gopCache.count]
 	}
 	ginc.write(chunk)
-	//fmt.Println("ginc size: ", len(ginc.packets))
+
 	return nil
 }
 
@@ -87,7 +88,6 @@ func (gopCache *GopCache) Write(p *av.Packet) {
 	var ok bool
 	if p.IsVideo {
 		vh := p.Header.(av.VideoPacketHeader)
-		//fmt.Println("isKey: ", vh.IsKeyFrame())
 		if vh.IsKeyFrame() && !vh.IsSeq() {
 			ok = true
 		}

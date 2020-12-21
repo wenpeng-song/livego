@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/gwuhaolin/livego/av"
+
 	"github.com/stretchr/testify/assert"
 )
 

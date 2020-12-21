@@ -1,0 +1,16 @@
+# # Logger level
+level: info
+
+# # FLV Options
+httpflv_addr: ":443"
+
+# # RTMP Options
+rtmp_addr: ":19035"
+read_timeout: 10
+write_timeout: 10
+
+# # API Options
+api_addr: ":80"
+server:
+- appname: live
+  live: true

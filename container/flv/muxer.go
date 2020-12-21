@@ -1,35 +1,37 @@
 package flv
 
 import (
-	"flag"
 	"fmt"
-	"log"
 	"os"
+	"path"
 	"strings"
 	"time"
 
 	"github.com/gwuhaolin/livego/av"
+	"github.com/gwuhaolin/livego/configure"
 	"github.com/gwuhaolin/livego/protocol/amf"
 	"github.com/gwuhaolin/livego/utils/pio"
 	"github.com/gwuhaolin/livego/utils/uid"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
 	flvHeader = []byte{0x46, 0x4c, 0x56, 0x01, 0x05, 0x00, 0x00, 0x00, 0x09}
-	flvFile   = flag.String("filFile", "./out.flv", "output flv file name")
 )
 
+/*
 func NewFlv(handler av.Handler, info av.Info) {
 	patths := strings.SplitN(info.Key, "/", 2)
 
 	if len(patths) != 2 {
-		log.Println("invalid info")
+		log.Warning("invalid info")
 		return
 	}
 
 	w, err := os.OpenFile(*flvFile, os.O_CREATE|os.O_RDWR, 0755)
 	if err != nil {
-		log.Println("open file error: ", err)
+		log.Error("open file error: ", err)
 	}
 
 	writer := NewFLVWriter(patths[0], patths[1], info.URL, w)
@@ -38,9 +40,10 @@ func NewFlv(handler av.Handler, info av.Info) {
 
 	writer.Wait()
 	// close flv file
-	log.Println("close flv file")
+	log.Debug("close flv file")
 	writer.ctx.Close()
 }
+*/
 
 const (
 	headerLen = 11
@@ -144,26 +147,27 @@ type FlvDvr struct{}
 func (f *FlvDvr) GetWriter(info av.Info) av.WriteCloser {
 	paths := strings.SplitN(info.Key, "/", 2)
 	if len(paths) != 2 {
-
-		log.Println("invalid info")
+		log.Warning("invalid info")
 		return nil
 	}
 
-	err := os.MkdirAll(paths[0], 0755)
+	flvDir := configure.Config.GetString("flv_dir")
+
+	err := os.MkdirAll(path.Join(flvDir, paths[0]), 0755)
 	if err != nil {
-		log.Println("mkdir error:", err)
+		log.Error("mkdir error: ", err)
 		return nil
 	}
 
-	fileName := fmt.Sprintf("%s_%d.%s", info.Key, time.Now().Unix(), "flv")
-	log.Println("flv dvr save stream to: ", fileName)
+	fileName := fmt.Sprintf("%s_%d.%s", path.Join(flvDir, info.Key), time.Now().Unix(), "flv")
+	log.Debug("flv dvr save stream to: ", fileName)
 	w, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR, 0755)
 	if err != nil {
-		log.Println("open file error: ", err)
+		log.Error("open file error: ", err)
 		return nil
 	}
 
 	writer := NewFLVWriter(paths[0], paths[1], info.URL, w)
-	log.Println("new flv dvr: ", writer.Info())
+	log.Debug("new flv dvr: ", writer.Info())
 	return writer
 }

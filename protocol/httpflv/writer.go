@@ -1,9 +1,7 @@
 package httpflv
 
 import (
-	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -11,6 +9,8 @@ import (
 	"github.com/gwuhaolin/livego/protocol/amf"
 	"github.com/gwuhaolin/livego/utils/pio"
 	"github.com/gwuhaolin/livego/utils/uid"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -27,8 +27,6 @@ type FLVWriter struct {
 	closedChan      chan struct{}
 	ctx             http.ResponseWriter
 	packetQueue     chan *av.Packet
-	first			bool
-	sFirst			bool
 }
 
 func NewFLVWriter(app, title, url string, ctx http.ResponseWriter) *FLVWriter {
@@ -42,32 +40,37 @@ func NewFLVWriter(app, title, url string, ctx http.ResponseWriter) *FLVWriter {
 		closedChan:  make(chan struct{}),
 		buf:         make([]byte, headerLen),
 		packetQueue: make(chan *av.Packet, maxQueueNum),
-		first: 		 false,
-		sFirst:		 false,
 	}
 
-	ret.ctx.Write([]byte{0x46, 0x4c, 0x56, 0x01, 0x05, 0x00, 0x00, 0x00, 0x09})
+	if _, err := ret.ctx.Write([]byte{0x46, 0x4c, 0x56, 0x01, 0x05, 0x00, 0x00, 0x00, 0x09}); err != nil {
+		log.Errorf("Error on response writer")
+		ret.closed = true
+	}
 	pio.PutI32BE(ret.buf[:4], 0)
-	ret.ctx.Write(ret.buf[:4])
+	if _, err := ret.ctx.Write(ret.buf[:4]); err != nil {
+		log.Errorf("Error on response writer")
+		ret.closed = true
+	}
 	go func() {
 		err := ret.SendPacket()
 		if err != nil {
-			log.Println("SendPacket error:", err)
+			log.Error("SendPacket error: ", err)
 			ret.closed = true
 		}
+
 	}()
 	return ret
 }
 
 func (flvWriter *FLVWriter) DropPacket(pktQue chan *av.Packet, info av.Info) {
-	log.Printf("[%v] packet queue max!!!", info)
+	log.Warningf("[%v] packet queue max!!!", info)
 	for i := 0; i < maxQueueNum-84; i++ {
 		tmpPkt, ok := <-pktQue
 		if ok && tmpPkt.IsVideo {
 			videoPkt, ok := tmpPkt.Header.(av.VideoPacketHeader)
 			// dont't drop sps config and dont't drop key frame
 			if ok && (videoPkt.IsSeq() || videoPkt.IsKeyFrame()) {
-				log.Println("insert keyframe to queue")
+				log.Debug("insert keyframe to queue")
 				pktQue <- tmpPkt
 			}
 
@@ -79,41 +82,26 @@ func (flvWriter *FLVWriter) DropPacket(pktQue chan *av.Packet, info av.Info) {
 		}
 		// try to don't drop audio
 		if ok && tmpPkt.IsAudio {
-			log.Println("insert audio to queue")
+			log.Debug("insert audio to queue")
 			pktQue <- tmpPkt
 		}
 	}
-	log.Println("packet queue len: ", len(pktQue))
+	log.Debug("packet queue len: ", len(pktQue))
 }
 
 func (flvWriter *FLVWriter) Write(p *av.Packet) (err error) {
 	err = nil
 	if flvWriter.closed {
-		err = errors.New("flvwrite source closed")
+		err = fmt.Errorf("flvwrite source closed")
 		return
 	}
+
 	defer func() {
 		if e := recover(); e != nil {
-			errString := fmt.Sprintf("FLVWriter has already been closed:%v", e)
-			err = errors.New(errString)
+			err = fmt.Errorf("FLVWriter has already been closed:%v", e)
 		}
 	}()
-	t := ""
-	if p.IsAudio {
-		t = "audio"
-	}
-	if p.IsVideo {
-		t = "video"
-	}
-	if p.IsMetadata {
-		t = "metadata"
-	}
-	if !flvWriter.first {
-		fmt.Println("first package: type: ", t, time.Now().UTC())
-		if p.IsVideo {
-			flvWriter.first = true
-		}
-	}
+
 	if len(flvWriter.packetQueue) >= maxQueueNum-24 {
 		flvWriter.DropPacket(flvWriter.packetQueue, flvWriter.Info())
 	} else {
@@ -140,23 +128,6 @@ func (flvWriter *FLVWriter) SendPacket() error {
 					}
 				} else {
 					typeID = av.TAG_AUDIO
-				}
-			}
-
-			t := ""
-			if p.IsAudio {
-				t = "audio"
-			}
-			if p.IsVideo {
-				t = "video"
-			}
-			if p.IsMetadata {
-				t = "metadata"
-			}
-			if !flvWriter.sFirst {
-				fmt.Println("first package send time: type: ", t, time.Now().UTC())
-				if p.IsVideo {
-					flvWriter.sFirst = true
 				}
 			}
 			dataLen := len(p.Data)
@@ -186,12 +157,10 @@ func (flvWriter *FLVWriter) SendPacket() error {
 				return err
 			}
 		} else {
-			return errors.New("closed")
+			return fmt.Errorf("closed")
 		}
 
 	}
-
-	return nil
 }
 
 func (flvWriter *FLVWriter) Wait() {
@@ -202,7 +171,7 @@ func (flvWriter *FLVWriter) Wait() {
 }
 
 func (flvWriter *FLVWriter) Close(error) {
-	log.Println("http flv closed")
+	log.Debug("http flv closed")
 	if !flvWriter.closed {
 		close(flvWriter.packetQueue)
 		close(flvWriter.closedChan)
