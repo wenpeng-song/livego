@@ -190,6 +190,32 @@ func (server *Server) GetLiveStatics(w http.ResponseWriter, req *http.Request) {
 	res.Data = msgs
 }
 
+func (server *Server) SimpleLiveStaticsData() *streams {
+
+	msgs := new(streams)
+
+	rtmpStream := server.handler.(*rtmp.RtmpStream)
+	if rtmpStream == nil {
+		return msgs;
+	}
+	rtmpStream.GetStreams().Range(func(key, val interface{}) bool {
+		if s, ok := val.(*rtmp.Stream); ok {
+			if s.GetReader() != nil {
+				switch s.GetReader().(type) {
+				case *rtmp.VirReader:
+					v := s.GetReader().(*rtmp.VirReader)
+					msg := stream{key.(string), v.Info().URL, v.ReadBWInfo.StreamId, v.ReadBWInfo.VideoDatainBytes, v.ReadBWInfo.VideoSpeedInBytesperMS,
+						v.ReadBWInfo.AudioDatainBytes, v.ReadBWInfo.AudioSpeedInBytesperMS}
+					msgs.Publishers = append(msgs.Publishers, msg)
+				}
+			}
+		}
+		return true
+	})
+
+	return msgs;
+}
+
 //http://127.0.0.1:8090/control/pull?&oper=start&app=live&name=123456&url=rtmp://192.168.16.136/live/123456
 func (s *Server) handlePull(w http.ResponseWriter, req *http.Request) {
 	var retString string
