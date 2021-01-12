@@ -31,7 +31,7 @@ func NewRtmpStream() *RtmpStream {
 
 func (rs *RtmpStream) HandleReader(r av.ReadCloser) {
 	info := r.Info()
-	log.Info("HandleReader: info[%v]", info)
+	log.Debug("HandleReader: info[%v]", info)
 
 	var stream *Stream
 	i, ok := rs.streams.Load(info.Key)
@@ -56,7 +56,7 @@ func (rs *RtmpStream) HandleReader(r av.ReadCloser) {
 
 func (rs *RtmpStream) HandleWriter(w av.WriteCloser) {
 	info := w.Info()
-	log.Info("HandleWriter: info[%v]", info)
+	log.Debug("HandleWriter: info[%v]", info)
 
 	var s *Stream
 	item, ok := rs.streams.Load(info.Key)
