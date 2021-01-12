@@ -76,13 +76,6 @@ var defaultConf = ServerCfg{
 
 var Config = viper.New()
 
-func initLog() {
-	if l, err := log.ParseLevel(Config.GetString("level")); err == nil {
-		log.SetLevel(l)
-		log.SetReportCaller(l == log.DebugLevel)
-	}
-}
-
 func init() {
 	// Default config
 	b, _ := json.Marshal(defaultConf)
@@ -122,9 +115,6 @@ func init() {
 	Config.SetEnvKeyReplacer(replacer)
 	Config.AllowEmptyEnv(true)
 	Config.AutomaticEnv()
-
-	// Log
-	initLog()
 
 	// Print final config
 	c := ServerCfg{}

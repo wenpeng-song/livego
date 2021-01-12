@@ -1,12 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"io"
 	"net"
-	"os"
-	"path"
-	"runtime"
 	"time"
 
 	"github.com/gwuhaolin/livego/configure"
@@ -15,6 +10,8 @@ import (
 	"github.com/gwuhaolin/livego/protocol/httpflv"
 	"github.com/gwuhaolin/livego/protocol/rtmp"
 
+	"github.com/gogap/logrus_mate"
+	_ "github.com/gogap/logrus_mate/hooks/file"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -107,25 +104,45 @@ func startAPI(stream *rtmp.RtmpStream) {
 			log.Info("HTTP-API listen On ", apiAddr)
 			opServer.Serve(opListen)
 		}()
+		go func ()  {
+			LogStaticsTickerLaunch(opServer)
+		}()
+	}
+}
+
+func LogStaticsTickerLaunch(opServer *api.Server) {
+	ticker := time.NewTicker(1 * time.Minute)
+
+	for range ticker.C {
+		msgs := opServer.SimpleLiveStaticsData();
+		log.Info("statics:", *msgs);
 	}
 }
 
 func init() {
-	log.SetFormatter(&log.TextFormatter{
-		FullTimestamp: true,
-		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
-			filename := path.Base(f.File)
-			return fmt.Sprintf("%s()", f.Function), fmt.Sprintf(" %s:%d", filename, f.Line)
-		},
-	})
-	current := time.Now()
-	yyyymmdd := current.Format("20060102")
-	file, err := os.OpenFile("livego_"+ yyyymmdd + ".log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-  if err != nil {
-			fmt.Println("Could Not Open Log File : " + err.Error())
-	}
+	mate, _ := logrus_mate.NewLogrusMate(
+		logrus_mate.ConfigFile("mate.conf"),
+	)
+	mate.Hijack(
+			log.StandardLogger(),
+			"mike",
+	)
 
-	log.SetOutput(io.MultiWriter(file, os.Stdout))
+	// log.SetFormatter(&log.TextFormatter{
+	// 	FullTimestamp: true,
+	// 	CallerPrettyfier: func(f *runtime.Frame) (string, string) {
+	// 		filename := path.Base(f.File)
+	// 		return fmt.Sprintf("%s()", f.Function), fmt.Sprintf(" %s:%d", filename, f.Line)
+	// 	},
+	// })
+	// current := time.Now()
+	// yyyymmdd := current.Format("20060102")
+	// file, err := os.OpenFile("livego_"+ yyyymmdd + ".log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+  // if err != nil {
+	// 		fmt.Println("Could Not Open Log File : " + err.Error())
+	// }
+
+	// log.SetOutput(io.MultiWriter(file, os.Stdout))
 }
 
 func main() {
@@ -151,4 +168,5 @@ func main() {
 	startAPI(stream)
 
 	startRtmp(stream, nil)
+
 }
