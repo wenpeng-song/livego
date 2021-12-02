@@ -10,6 +10,7 @@ import (
 	"github.com/gwuhaolin/livego/utils/pio"
 	"github.com/gwuhaolin/livego/utils/uid"
 
+	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -26,36 +27,53 @@ type FLVWriter struct {
 	closed          bool
 	closedChan      chan struct{}
 	ctx             http.ResponseWriter
+	ws              *websocket.Conn
 	packetQueue     chan *av.Packet
 }
 
-func NewFLVWriter(app, title, url string, ctx http.ResponseWriter) *FLVWriter {
+func WriteBinary(writer *FLVWriter, data []byte) (int, error) {
+	if writer.ws != nil {
+		err := writer.ws.WriteMessage(websocket.BinaryMessage, data)
+		return 0, err
+	} else {
+		return writer.ctx.Write(data)
+	}
+}
+
+func NewFLVWriter(app, title, url string, ctx http.ResponseWriter, ws *websocket.Conn) *FLVWriter {
 	ret := &FLVWriter{
 		Uid:         uid.NewId(),
 		app:         app,
 		title:       title,
 		url:         url,
 		ctx:         ctx,
+		ws:          ws,
 		RWBaser:     av.NewRWBaser(time.Second * 10),
 		closedChan:  make(chan struct{}),
 		buf:         make([]byte, headerLen),
 		packetQueue: make(chan *av.Packet, maxQueueNum),
 	}
 
-	if _, err := ret.ctx.Write([]byte{0x46, 0x4c, 0x56, 0x01, 0x05, 0x00, 0x00, 0x00, 0x09}); err != nil {
+	if _, err := WriteBinary(ret, []byte{0x46, 0x4c, 0x56, 0x01, 0x05, 0x00, 0x00, 0x00, 0x09}); err != nil {
 		log.Errorf("Error on response writer")
-		ret.closed = true
+		if !ret.closed {
+			ret.Close(err)
+		}
 	}
 	pio.PutI32BE(ret.buf[:4], 0)
-	if _, err := ret.ctx.Write(ret.buf[:4]); err != nil {
+	if _, err := WriteBinary(ret, ret.buf[:4]); err != nil {
 		log.Errorf("Error on response writer")
-		ret.closed = true
+		if !ret.closed {
+			ret.Close(err)
+		}
 	}
 	go func() {
 		err := ret.SendPacket()
 		if err != nil {
 			log.Error("SendPacket error: ", err)
-			ret.closed = true
+			if !ret.closed {
+				ret.Close(err)
+			}
 		}
 
 	}()
@@ -113,6 +131,9 @@ func (flvWriter *FLVWriter) Write(p *av.Packet) (err error) {
 
 func (flvWriter *FLVWriter) SendPacket() error {
 	for {
+		if flvWriter.closed {
+			return fmt.Errorf("closed")
+		}
 		p, ok := <-flvWriter.packetQueue
 		if ok {
 			flvWriter.RWBaser.SetPreTime()
@@ -144,16 +165,16 @@ func (flvWriter *FLVWriter) SendPacket() error {
 			pio.PutI24BE(h[4:7], int32(timestampbase))
 			pio.PutU8(h[7:8], uint8(timestampExt))
 
-			if _, err := flvWriter.ctx.Write(h); err != nil {
+			if _, err := WriteBinary(flvWriter, h); err != nil {
 				return err
 			}
 
-			if _, err := flvWriter.ctx.Write(p.Data); err != nil {
+			if _, err := WriteBinary(flvWriter, p.Data); err != nil {
 				return err
 			}
 
 			pio.PutI32BE(h[:4], int32(preDataLen))
-			if _, err := flvWriter.ctx.Write(h[:4]); err != nil {
+			if _, err := WriteBinary(flvWriter, h[:4]); err != nil {
 				return err
 			}
 		} else {
@@ -171,8 +192,14 @@ func (flvWriter *FLVWriter) Wait() {
 }
 
 func (flvWriter *FLVWriter) Close(error) {
-	log.Debug("http flv closed")
 	if !flvWriter.closed {
+		var protocol string
+		if flvWriter.ws != nil {
+			protocol = "websocket"
+		} else {
+			protocol = "http"
+		}
+		log.Info(protocol, " flv writer closed, uid:", flvWriter.Uid, " url:", flvWriter.url)
 		close(flvWriter.packetQueue)
 		close(flvWriter.closedChan)
 	}

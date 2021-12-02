@@ -9,8 +9,17 @@ import (
 	"github.com/gwuhaolin/livego/av"
 	"github.com/gwuhaolin/livego/protocol/rtmp"
 
+	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
+
+var upgrader = websocket.Upgrader{
+	CheckOrigin: checkOrigin,
+}
+
+func checkOrigin(r *http.Request) bool {
+	return true
+}
 
 type Server struct {
 	handler av.Handler
@@ -134,8 +143,28 @@ func (server *Server) handleConn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	writer := NewFLVWriter(paths[0], paths[1], url, w)
 
+	var writer *FLVWriter
+	var protocol string
+	if websocket.IsWebSocketUpgrade(r) {
+		protocol = "websocket"
+		ws, err := upgrader.Upgrade(w, r, w.Header())
+		if err != nil {
+			log.Info("upgrade:", err)
+			return
+		}
+		log.Println("ws flv connected: ", url)
+		writer = NewFLVWriter(paths[0], paths[1], url, nil, ws)
+		defer func() {
+			log.Info("ws flv closed: ", url)
+			ws.Close()
+		}()
+	} else {
+		protocol = "http"
+		writer = NewFLVWriter(paths[0], paths[1], url, w, nil)
+	}
+
+	log.Info(protocol, " flv start handle writer, id:", writer.Uid, " url:", url)
 	server.handler.HandleWriter(writer)
 	writer.Wait()
 }

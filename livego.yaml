@@ -2,7 +2,7 @@
 level: info
 
 # # FLV Options
-httpflv_addr: ":443"
+httpflv_addr: ":19080"
 
 # # RTMP Options
 rtmp_addr: ":19035"
