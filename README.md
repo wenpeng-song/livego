@@ -2,6 +2,18 @@
     <img src='./logo.png' width='200px' height='80px'/>
 </p>
 
+### fork change list:
+a pure rtmp in, rtmp/http-flv/ws-flv out, server
+
+ - add websocket-flv support
+ - add log file rotate
+ - disable flv dvr, file recording
+ - disable room related
+ - disable hls
+ - remove the limit for rtmp app name, ignore app name chec
+ - remove a not neccesary error, "req error" for support more rtmp push.
+
+
 [中文](./README_cn.md)
 
 [![Test](https://github.com/gwuhaolin/livego/workflows/Test/badge.svg)](https://github.com/gwuhaolin/livego/actions?query=workflow%3ATest)
