@@ -9,17 +9,20 @@ import (
 	"github.com/gwuhaolin/livego/av"
 	"github.com/gwuhaolin/livego/protocol/rtmp"
 
+	"github.com/gobwas/ws"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: checkOrigin,
-}
+// var upgrader = websocket.Upgrader{
+// 	ReadBufferSize:  1024,
+// 	WriteBufferSize: 1024,
+// 	CheckOrigin:     checkOrigin,
+// }
 
-func checkOrigin(r *http.Request) bool {
-	return true
-}
+// func checkOrigin(r *http.Request) bool {
+// 	return true
+// }
 
 type Server struct {
 	handler av.Handler
@@ -148,7 +151,9 @@ func (server *Server) handleConn(w http.ResponseWriter, r *http.Request) {
 	var protocol string
 	if websocket.IsWebSocketUpgrade(r) {
 		protocol = "websocket"
-		ws, err := upgrader.Upgrade(w, r, w.Header())
+		// ws, err := upgrader.Upgrade(w, r, w.Header())
+		ws, _, _, err := ws.UpgradeHTTP(r, w)
+
 		if err != nil {
 			log.Info("upgrade:", err)
 			return

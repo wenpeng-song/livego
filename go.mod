@@ -7,6 +7,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-akka/configuration v0.0.0-20200606091224-a002c0330665 // indirect
 	github.com/go-redis/redis/v7 v7.2.0
+	github.com/gobwas/ws v1.1.0 // indirect
 	github.com/gogap/config v0.0.0-20190801085516-e664631840ac // indirect
 	github.com/gogap/logrus_mate v1.1.0 // indirect
 	github.com/gorilla/mux v1.7.4 // indirect
