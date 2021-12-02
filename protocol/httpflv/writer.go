@@ -1,8 +1,8 @@
 package httpflv
 
 import (
+	"context"
 	"fmt"
-	"net"
 	"net/http"
 	"time"
 
@@ -11,9 +11,8 @@ import (
 	"github.com/gwuhaolin/livego/utils/pio"
 	"github.com/gwuhaolin/livego/utils/uid"
 
+	"nhooyr.io/websocket"
 	// "github.com/gorilla/websocket"
-	"github.com/gobwas/ws"
-	"github.com/gobwas/ws/wsutil"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -30,15 +29,16 @@ type FLVWriter struct {
 	closed          bool
 	closedChan      chan struct{}
 	ctx             http.ResponseWriter
-	// ws              *websocket.Conn
-	ws          net.Conn
-	packetQueue chan *av.Packet
+	ws              *websocket.Conn
+	ws_ctx          context.Context
+	packetQueue     chan *av.Packet
 }
 
 func WriteBinary(writer *FLVWriter, data []byte) (int, error) {
 	if writer.ws != nil {
 		// err := writer.ws.WriteMessage(websocket.BinaryMessage, data)
-		err := wsutil.WriteServerMessage(writer.ws, ws.OpBinary, data)
+		err := writer.ws.Write(writer.ws_ctx, websocket.MessageBinary, data)
+		// err := wsutil.WriteServerMessage(writer.ws, ws.OpBinary, data)
 		return 0, err
 	} else {
 		return writer.ctx.Write(data)
@@ -46,7 +46,8 @@ func WriteBinary(writer *FLVWriter, data []byte) (int, error) {
 }
 
 // func NewFLVWriter(app, title, url string, ctx http.ResponseWriter, ws *websocket.Conn) *FLVWriter {
-func NewFLVWriter(app, title, url string, ctx http.ResponseWriter, ws net.Conn) *FLVWriter {
+func NewFLVWriter(app, title, url string, ctx http.ResponseWriter, ws *websocket.Conn, ws_ctx context.Context) *FLVWriter {
+	// func NewFLVWriter(app, title, url string, ctx http.ResponseWriter, ws net.Conn) *FLVWriter {
 	ret := &FLVWriter{
 		Uid:         uid.NewId(),
 		app:         app,
@@ -54,6 +55,7 @@ func NewFLVWriter(app, title, url string, ctx http.ResponseWriter, ws net.Conn) 
 		url:         url,
 		ctx:         ctx,
 		ws:          ws,
+		ws_ctx:      ws_ctx,
 		RWBaser:     av.NewRWBaser(time.Second * 10),
 		closedChan:  make(chan struct{}),
 		buf:         make([]byte, headerLen),

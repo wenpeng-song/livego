@@ -9,9 +9,8 @@ import (
 	"github.com/gwuhaolin/livego/av"
 	"github.com/gwuhaolin/livego/protocol/rtmp"
 
-	"github.com/gobwas/ws"
-	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
+	"nhooyr.io/websocket"
 )
 
 // var upgrader = websocket.Upgrader{
@@ -36,6 +35,11 @@ type stream struct {
 type streams struct {
 	Publishers []stream `json:"publishers"`
 	Players    []stream `json:"players"`
+}
+
+func IsWebSocketUpgrade(r *http.Request) bool {
+	return tokenListContainsValue(r.Header, "Connection", "upgrade") &&
+		tokenListContainsValue(r.Header, "Upgrade", "websocket")
 }
 
 func NewServer(h av.Handler) *Server {
@@ -149,24 +153,29 @@ func (server *Server) handleConn(w http.ResponseWriter, r *http.Request) {
 
 	var writer *FLVWriter
 	var protocol string
-	if websocket.IsWebSocketUpgrade(r) {
+	if IsWebSocketUpgrade(r) {
 		protocol = "websocket"
 		// ws, err := upgrader.Upgrade(w, r, w.Header())
-		ws, _, _, err := ws.UpgradeHTTP(r, w)
+		ws, err := websocket.Accept(w, r, &websocket.AcceptOptions{
+			OriginPatterns: []string{"*"},
+		})
 
 		if err != nil {
-			log.Info("upgrade:", err)
+			log.Errorf("upgrade:", err)
 			return
 		}
+		ctx := ws.CloseRead(r.Context())
+
 		log.Println("ws flv connected: ", url)
-		writer = NewFLVWriter(paths[0], paths[1], url, nil, ws)
+		writer = NewFLVWriter(paths[0], paths[1], url, nil, ws, ctx)
 		defer func() {
 			log.Info("ws flv closed: ", url)
-			ws.Close()
+			// ws.Close()
+			ws.Close(websocket.StatusNormalClosure, "")
 		}()
 	} else {
 		protocol = "http"
-		writer = NewFLVWriter(paths[0], paths[1], url, w, nil)
+		writer = NewFLVWriter(paths[0], paths[1], url, w, nil, nil)
 	}
 
 	log.Info(protocol, " flv start handle writer, id:", writer.Uid, " url:", url)
