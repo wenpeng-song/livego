@@ -43,6 +43,7 @@ type ServerCfg struct {
 	FLVDir          string       `mapstructure:"flv_dir"`
 	RTMPAddr        string       `mapstructure:"rtmp_addr"`
 	HTTPFLVAddr     string       `mapstructure:"httpflv_addr"`
+	HTTPFLVDisable  bool         `mapstructure:"httpflv_disable"`
 	HLSAddr         string       `mapstructure:"hls_addr"`
 	HLSKeepAfterEnd bool         `mapstructure:"hls_keep_after_end"`
 	APIAddr         string       `mapstructure:"api_addr"`
@@ -58,8 +59,9 @@ type ServerCfg struct {
 // default config
 var defaultConf = ServerCfg{
 	ConfigFile:      "livego.yaml",
-	RTMPAddr:        ":19080",
+	RTMPAddr:        ":19035",
 	HTTPFLVAddr:     ":19080",
+	HTTPFLVDisable:  false,
 	HLSAddr:         ":7002",
 	HLSKeepAfterEnd: false,
 	APIAddr:         ":8090",
@@ -87,6 +89,7 @@ func init() {
 	// Flags
 	pflag.String("rtmp_addr", ":19080", "RTMP server listen address")
 	pflag.String("httpflv_addr", ":19080", "HTTP-FLV server listen address")
+	pflag.Bool("httpflv_disable", false, " disable http-flv")
 	pflag.String("hls_addr", ":7002", "HLS server listen address")
 	pflag.String("api_addr", ":8090", "HTTP manage interface server listen address")
 	pflag.String("config_file", "livego.yaml", "configure filename")

@@ -67,6 +67,12 @@ func startRtmp(stream *rtmp.RtmpStream, hlsServer *hls.Server) {
 }
 
 func startHTTPFlv(stream *rtmp.RtmpStream) {
+	httpflvDisable := configure.Config.GetBool("httpflv_disable")
+	if httpflvDisable {
+		log.Info("httpflv is disabled.")
+		return
+	}
+
 	httpflvAddr := configure.Config.GetString("httpflv_addr")
 
 	flvListen, err := net.Listen("tcp", httpflvAddr)
