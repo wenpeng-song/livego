@@ -67,6 +67,12 @@ func startRtmp(stream *rtmp.RtmpStream, hlsServer *hls.Server) {
 }
 
 func startHTTPFlv(stream *rtmp.RtmpStream) {
+	httpflvDisable := configure.Config.GetBool("httpflv_disable")
+	if httpflvDisable {
+		log.Info("httpflv is disabled.")
+		return
+	}
+
 	httpflvAddr := configure.Config.GetString("httpflv_addr")
 
 	flvListen, err := net.Listen("tcp", httpflvAddr)
@@ -104,7 +110,7 @@ func startAPI(stream *rtmp.RtmpStream) {
 			log.Info("HTTP-API listen On ", apiAddr)
 			opServer.Serve(opListen)
 		}()
-		go func ()  {
+		go func() {
 			LogStaticsTickerLaunch(opServer)
 		}()
 	}
@@ -114,8 +120,8 @@ func LogStaticsTickerLaunch(opServer *api.Server) {
 	ticker := time.NewTicker(1 * time.Minute)
 
 	for range ticker.C {
-		msgs := opServer.SimpleLiveStaticsData();
-		log.Info("statics:", *msgs);
+		msgs := opServer.SimpleLiveStaticsData()
+		log.Info("statics:", *msgs)
 	}
 }
 
@@ -124,8 +130,8 @@ func init() {
 		logrus_mate.ConfigFile("mate.conf"),
 	)
 	mate.Hijack(
-			log.StandardLogger(),
-			"mike",
+		log.StandardLogger(),
+		"mike",
 	)
 
 	// log.SetFormatter(&log.TextFormatter{
@@ -138,7 +144,7 @@ func init() {
 	// current := time.Now()
 	// yyyymmdd := current.Format("20060102")
 	// file, err := os.OpenFile("livego_"+ yyyymmdd + ".log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-  // if err != nil {
+	// if err != nil {
 	// 		fmt.Println("Could Not Open Log File : " + err.Error())
 	// }
 
@@ -165,7 +171,7 @@ func main() {
 	stream := rtmp.NewRtmpStream()
 	// hlsServer := startHls()
 	startHTTPFlv(stream)
-	startAPI(stream)
+	// startAPI(stream)
 
 	startRtmp(stream, nil)
 
